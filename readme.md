@@ -10,7 +10,7 @@ git clone --depth=1 https://github.com/mugiseyebrows/cicd-shell.git
 node cicd-shell/mediator/index.js
 ```
 
-Then commit to ci/cd (github actions)
+Insert `cicd-shell` to pipeline at specific point you want to investigate.
 
 ```yaml
 jobs:
@@ -22,9 +22,11 @@ jobs:
     - run: node cicd-shell\server\index.js your.public.server 8857
 ```
 
+Commit and push.
+
 Wait until mediator prints `server connected`.
 
-Then run pyqtclient on your machine, connect to `your.public.server:8858`, and execute commands.
+Run `pyqtclient` on your machine, connect to `your.public.server:8858`, and execute commands.
 
 ```cmd
 git clone --depth=1 https://github.com/mugiseyebrows/cicd-shell.git
