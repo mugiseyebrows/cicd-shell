@@ -10,7 +10,7 @@ git clone --depth=1 https://github.com/mugiseyebrows/cicd-shell.git
 node cicd-shell/mediator/index.js
 ```
 
-Insert `cicd-shell` to pipeline at specific point you want to investigate.
+Insert `cicd-shell` to pipeline at specific point you want to investigate. (todo: github action)
 
 ```yaml
 jobs:
@@ -19,7 +19,13 @@ jobs:
     steps:
     - uses: actions/setup-node@v3
     - run: git clone --depth=1 https://github.com/mugiseyebrows/cicd-shell.git
+    - run: |
+        pushd cicd-shell\server
+          npm i
+        popd
+      shell: cmd
     - run: node cicd-shell\server\index.js your.public.server 8857
+      shell: cmd
 ```
 
 Commit and push.
