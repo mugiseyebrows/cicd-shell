@@ -1,8 +1,8 @@
 # cicd-shell
 
-Shell for interactive fiddling with ci/cd.
+Shell for fiddling with ci/cd.
 
-You need to run mediator on public server (vps).
+Run mediator on public server (vps).
 
 ```bash
 ssh user@your.public.server
@@ -10,7 +10,7 @@ git clone --depth=1 https://github.com/mugiseyebrows/cicd-shell.git
 node cicd-shell/mediator/index.js
 ```
 
-Insert `cicd-shell` to pipeline at specific point you want to investigate. (todo: github action)
+Insert `cicd-shell` to pipeline (todo: github action).
 
 ```yaml
 jobs:
@@ -32,12 +32,14 @@ Commit and push.
 
 Wait until mediator prints `server connected`.
 
-Run `pyqtclient` on your machine, connect to `your.public.server:8858`, and execute commands.
+Run `pyqtclient` on local machine. 
 
 ```cmd
 git clone --depth=1 https://github.com/mugiseyebrows/cicd-shell.git
 python cicd-shell\pyqtclient\main.py
 ```
+
+Connect to `your.public.server:8858`, and execute commands.
 
 ![image](images/pyqtclient.png)
 
@@ -49,3 +51,5 @@ python cicd-shell\pyqtclient\main.py
 - Server closes connection to mediator. 
 - Mediator closes connection to client.
 - Server reconnects for next command.
+
+![image](images/sequence-diagram.png)

@@ -1,0 +1,10 @@
+@startuml
+server -> mediator: connect
+client -> mediator: connect
+client -> mediator: command
+mediator -> server: command
+server -> mediator: response
+mediator -> client: response
+server -> mediator: disconnect
+mediator -> client: disconnect
+@enduml
