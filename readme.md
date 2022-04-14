@@ -53,3 +53,39 @@ Connect to `your.public.server:8858`, and execute commands.
 - Server reconnects for next command.
 
 ![image](images/sequence-diagram.png)
+
+# Protocol
+
+There are regular commands that got executed in shell (using `child_process.spawn`) and few special commands that doesn't. Special commands starts with `:`.
+
+Client send messages in json format, with optional binary tail (`:push` command). Like this:
+
+```json
+{"command": "echo 1"}
+```
+
+Server responds in plain text or in binary (`:pull` command) or in json (`:info` command).
+
+## Special commands
+
+```javascript
+// description
+> client request
+< server response
+
+// upload file
+> {"command":":push", "path": "path/to/dir/or/file", "name": "name.ext", "file_size": size in bytes}binary data (file contents)
+< file path/to/dir/or/file writen
+
+// get file size
+> {"command":":info", "path": "path/to/file"} 
+< {"file_size": size in bytes}
+
+// download file
+> {"command":":pull", "path": "path/to/file"}
+< binary data (file contents)
+
+// get cwd
+> {"command":":pwd"}
+< current working directory
+```
