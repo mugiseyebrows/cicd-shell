@@ -13,7 +13,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(495, 352)
+        MainWindow.resize(600, 400)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.centralwidget)
@@ -50,14 +50,29 @@ class Ui_MainWindow(object):
         self.command.setObjectName("command")
         self.horizontalLayout.addWidget(self.command)
         self.verticalLayout.addLayout(self.horizontalLayout)
+        self.upload = FileSelect(self.centralwidget)
+        self.upload.setObjectName("upload")
+        self.verticalLayout.addWidget(self.upload)
+        self.download = FileSelect(self.centralwidget)
+        self.download.setObjectName("download")
+        self.verticalLayout.addWidget(self.download)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 495, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 600, 21))
         self.menubar.setObjectName("menubar")
+        self.menuFile = QtWidgets.QMenu(self.menubar)
+        self.menuFile.setObjectName("menuFile")
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
+        self.actionUpload = QtWidgets.QAction(MainWindow)
+        self.actionUpload.setObjectName("actionUpload")
+        self.actionDownload = QtWidgets.QAction(MainWindow)
+        self.actionDownload.setObjectName("actionDownload")
+        self.menuFile.addAction(self.actionUpload)
+        self.menuFile.addAction(self.actionDownload)
+        self.menubar.addAction(self.menuFile.menuAction())
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
@@ -70,6 +85,10 @@ class Ui_MainWindow(object):
         self.label.setText(_translate("MainWindow", "Host"))
         self.port.setText(_translate("MainWindow", "8858"))
         self.label_4.setText(_translate("MainWindow", ">"))
+        self.menuFile.setTitle(_translate("MainWindow", "&File"))
+        self.actionUpload.setText(_translate("MainWindow", "&Upload"))
+        self.actionDownload.setText(_translate("MainWindow", "&Download"))
+from FileSelect import FileSelect
 
 
 if __name__ == "__main__":
