@@ -5,6 +5,7 @@ const fs = require('fs')
 const path = require('path')
 const ruchardet = require('ruchardet')
 const chardet = require('chardet')
+const debug = require('debug')('cicd-server')
 
 let cwd = process.cwd()
 
@@ -150,50 +151,159 @@ function set_cwd(dst) {
     return false
 }
 
+function handle_push(message, client, data) {
+    //console.log('handle_push')
+    try {
+        
+        const path_ = message.path
+        const name = message.name
+
+        if (path_ === undefined || name === undefined) {
+            client.write(`path ${path_} name ${name}`, () => client.end())
+            return
+        }
+
+        let file_path = path_
+        if (fs.existsSync(path_) && fs.statSync(path_).isDirectory()) {
+            file_path = path.join(path_, name)
+        }
+
+        fs.writeFileSync(file_path, data)
+        console.log(`${file_path} writen`)
+        client.write(`${file_path} writen`, () => client.end())
+    } catch (e) {
+        console.log(e)
+        client.end()
+    }
+}
+
+function handle_pull(message, client) {
+    console.log('handle_pull')
+    try {
+        const buffer = fs.readFileSync(message.path)
+        client.write(buffer, () => client.end())
+    } catch (e) {
+        console.log(e)
+        client.end()
+    }
+}
+
+function handle_info(message, client) {
+    let file_size
+    let error
+    try {
+        file_size = fs.statSync(message.path).size
+    } catch (e) {
+        error = e.message
+    }
+    let reponse = JSON.stringify({file_size, error})
+    console.log(reponse)
+    client.write(reponse, () => client.end())
+}
+
+function handle_pwd(message, client) {
+    client.write(cwd, () => client.end())
+}
+
+function handle_command(message, client, data) {
+    let command = message.command
+    let [executable, args] = split_args(command)
+    if (executable == 'cd') {
+        let dst = args[0]
+        if (!set_cwd(dst)) {
+            client.write(`no such directory ${dst}\n`)
+        }
+        if (process.platform === 'win32') {
+            executable = 'echo'
+            args = ["%CD%"]
+        } else {
+            executable = 'pwd'
+            args = []
+        }
+    }
+    if (executable == 'exit') {
+        process.exit(0)
+    }
+    
+    function write(data) {
+        if (Buffer.isBuffer(data)) {
+            let enc = cli_enc
+            if (argv.ruchardet) {
+                enc = ruchardet.detect(data)
+            } else if (argv.chardet) {
+                enc = chardet.detect(data)
+            } else if (argv.enc !== undefined) {
+                enc = argv.enc
+            }
+            client.write(iconv.decode(data, enc))
+        } else {
+            client.write(data)
+        }
+    }
+
+    spawn(executable, args, cwd, write, write).then(() => {client.end()})
+}
+
+function sum_length(items) {
+    return items.reduce((p,c) => p + c.length, 0)
+}
+
 function execute() {
     return new Promise((resolve, reject) => {
         var client = new net.Socket()
         client.connect(argv.port, argv.host, ()=>{
             console.log(`connected to ${argv.host} ${argv.port}`)
         })
-        client.on('data', (data) => {
-            let command = data.toString()
-            let [executable, args] = split_args(command)
-            if (executable == 'cd') {
-                let dst = args[0]
-                if (!set_cwd(dst)) {
-                    client.write(`no such directory ${dst}\n`)
-                }
-                if (process.platform === 'win32') {
-                    executable = 'echo'
-                    args = ["%CD%"]
-                } else {
-                    executable = 'pwd'
-                    args = []
-                }
-            }
-            if (executable == 'exit') {
-                process.exit(0)
-            }
-            
-            console.log({executable, args, cwd})
 
-            function on_data(data) {
-                if (Buffer.isBuffer(data)) {
-                    let enc = cli_enc
-                    if (argv.ruchardet) {
-                        enc = ruchardet.detect(data)
-                    } else if (argv.chardet) {
-                        enc = chardet.detect(data)
-                    } else if (argv.enc !== undefined) {
-                        enc = argv.enc
-                    }
-                    client.write(iconv.decode(data, enc))
+        let message = null
+        let buffers = []
+        let file_offset = -1
+
+        client.on('data', (data) => {
+            console.log('client on data')
+            buffers.push(data)
+            if (message === null) {
+                let buffer = Buffer.concat(buffers)
+                let op_br = buffer.indexOf(Buffer.from("{"))
+                let cl_br = buffer.indexOf(Buffer.from("}"))
+                if (op_br !== 0) {
+                    return client.write('error p1 !== 0', () => client.end())
+                }
+                if (cl_br > -1) {
+                    message = JSON.parse(buffer.slice(op_br, cl_br+1).toString())
+                    file_offset = cl_br + 1
+                    console.log('message received', message)
                 } else {
-                    client.write(data)
+                    console.log('waiting for message')
                 }
             }
-            spawn(executable, args, cwd, on_data, on_data).then(() => {client.end()})
+            if (message !== null) {
+                if (message.file_size !== undefined) {
+                    var length = sum_length(buffers)
+                    if (length - file_offset >= message.file_size) {
+                        if (length - file_offset != message.file_size) {
+                            console.log('file_size error')
+                        }
+                        if (message.command === ':push') {
+                            return handle_push(message, client, Buffer.concat(buffers).slice(file_offset))
+                        } else {
+                            return client.write('not push command but with file', () => client.end())
+                        }
+                    } else {
+                        console.log('waiting for more data')
+                    }
+                } else {
+                    if (message.command === ':pull') {
+                        return handle_pull(message, client)
+                    } else if (message.command === ':info') {
+                        return handle_info(message, client)
+                    } else if (message.command === ":pwd") {
+                        return handle_pwd(message, client)
+                    } else {
+                        return handle_command(message, client)
+                    }
+                }
+            }
         })
         client.on('close', () => {
             resolve()

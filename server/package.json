@@ -18,6 +18,7 @@
   "homepage": "https://github.com/mugiseyebrows/shell-test#readme",
   "dependencies": {
     "chardet": "^1.4.0",
+    "debug": "^4.3.4",
     "iconv-lite": "^0.6.3",
     "ruchardet": "^0.0.2",
     "yargs": "^17.4.1"
