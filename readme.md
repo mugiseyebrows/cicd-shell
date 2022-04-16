@@ -9,7 +9,9 @@ Run mediator on public server (vps).
 ```bash
 ssh user@your.public.server
 git clone --depth=1 https://github.com/mugiseyebrows/cicd-shell.git
-node cicd-shell/mediator/index.js my-server-secret my-client-secret
+cd cicd-shell/mediator
+npm i
+node index.js my-server-secret my-client-secret
 ```
 
 Insert `cicd-shell` to pipeline (todo: github action).
