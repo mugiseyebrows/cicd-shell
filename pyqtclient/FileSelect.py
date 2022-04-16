@@ -30,7 +30,7 @@ class FileSelect(QtWidgets.QWidget):
         path = QtWidgets.QFileDialog.getExistingDirectory(self)
         if path == "":
             return
-        self.setLocalPath(path)
+        self.setLocalPath(QtCore.QDir.toNativeSeparators(path))
 
     def onSelectFile(self):
         path = self.localPath()
@@ -41,7 +41,8 @@ class FileSelect(QtWidgets.QWidget):
         path, _ = fn(self, "", path)
         if path == "":
             return
-        self.setLocalPath(path)
+        
+        self.setLocalPath(QtCore.QDir.toNativeSeparators(path))
 
     def onRun(self):
         ui = self._ui
