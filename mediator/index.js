@@ -11,31 +11,35 @@ const argv = require('yargs')
 
 //console.log(argv); //process.exit(0)
 
-var servers = []
-
-function communicate(server, client) {
-    let server_authorized = false
-    let client_authorized = false
-
-    function authorize(data, secret, onerror, onsuccess) {
-        let op_br = data.indexOf(Buffer.from("{"))
-        let cl_br = data.indexOf(Buffer.from("}"))
-        if (op_br !== 0) {
-            return onerror("op_br != 0")
-        }
-        if (cl_br < 0) {
-            return onerror("cl_br < 0")
-        }
-        let message = JSON.parse(data.slice(0, cl_br + 1).toString())
-        if (message.secret === secret) {
-            return onsuccess(message, data.slice(cl_br + 1))
-        } else {
-            return onerror("incorrect secret")
-        }
+function authorize(data, secret, onerror, onsuccess) {
+    let op_br = data.indexOf(Buffer.from("{"))
+    let cl_br = data.indexOf(Buffer.from("}"))
+    if (op_br !== 0) {
+        return onerror("op_br != 0")
     }
+    if (cl_br < 0) {
+        return onerror("cl_br < 0")
+    }
+    let message = JSON.parse(data.slice(0, cl_br + 1).toString())
+    if (message.secret === secret) {
+        return onsuccess(message, data.slice(cl_br + 1))
+    } else {
+        return onerror("incorrect secret")
+    }
+}
 
-    server.on('data', (data) => {
-        if (server_authorized) {
+class Worker {
+    constructor(server) {
+        this._server = server
+        this._client = null
+        this._server_authorized = false
+        this._client_authorized = false
+        server.on('data', (data) => this.onServerData(data))
+    }
+    onServerData(data) {
+        //let server = this._server
+        let client = this._client
+        if (this._server_authorized) {
             client.write(data)
         } else {
             debug('authorizing server')
@@ -44,16 +48,22 @@ function communicate(server, client) {
                 console.log(err)
                 client.end()
             }, (message, data) => {
-                server_authorized = true
+                this._server_authorized = true
                 debug('server authorized')
                 if (data.length > 0) {
-                    client.write(data)
+                    if (client === null) {
+                        debug('client is null')
+                    } else {
+                        client.write(data)
+                    }
                 }
             })
         }
-    })
-    client.on('data', (data) => {
-        if (client_authorized) {
+    }
+    onClientData(data) {
+        let server = this._server
+        let client = this._client
+        if (this._client_authorized) {
             server.write(data)
         } else {
             debug('authorizing client')
@@ -68,25 +78,28 @@ function communicate(server, client) {
                 }
             })
         }
-    })
-    server.on('close', () => {
-        client.end()
-    })
-    
+    }
+    setClient(client) {
+        this._client = client
+        client.on('data', (data) => this.onClientData(data))
+    }
 }
 
+var workers = []
+
 net.createServer().on('connection', (socket) => {
-    console.log('server connected')
-    servers.push(socket)
+    debug('server connected')
+    workers.push(new Worker(socket))
 }).listen(argv.s, argv.b)
 
 net.createServer().on('connection', (socket) => {
-    if (servers.length > 0) {
-        var server = servers.shift()
-        communicate(server, socket)
+    debug('client connected')
+    if (workers.length > 0) {
+        var worker = workers.shift()
+        worker.setClient(socket)
     } else {
-        console.log()
-        socket.end('no servers left')
+        console.log('no workers left')
+        socket.end('no workers left')
     }
 }).listen(argv.c, argv.b)
 
