@@ -46,7 +46,9 @@ class Worker {
             authorize(data, argv.server_secret, 
             (err) => {
                 console.log(err)
-                client.end()
+                if (client !== null) {
+                    client.end()
+                }
             }, (message, data) => {
                 this._server_authorized = true
                 debug('server authorized')
