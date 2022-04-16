@@ -1,13 +1,15 @@
 # cicd-shell
 
-Shell for fiddling with ci/cd.
+Shell for fiddling with ci/cd: executing commands, pushing and pulling files.
+
+# Using
 
 Run mediator on public server (vps).
 
 ```bash
 ssh user@your.public.server
 git clone --depth=1 https://github.com/mugiseyebrows/cicd-shell.git
-node cicd-shell/mediator/index.js
+node cicd-shell/mediator/index.js my-server-secret my-client-secret
 ```
 
 Insert `cicd-shell` to pipeline (todo: github action).
@@ -24,7 +26,7 @@ jobs:
           npm i
         popd
       shell: cmd
-    - run: node cicd-shell\server\index.js your.public.server 8857
+    - run: node cicd-shell\server\index.js your.public.server 8857 ${{ secrets.SERVER_SECRET }}
       shell: cmd
 ```
 
