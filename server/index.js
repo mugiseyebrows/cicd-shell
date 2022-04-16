@@ -67,6 +67,7 @@ function spawn(executable, args, cwd, onstdout, onstderr) {
             proc.on('close', resolve)
         } catch (e) {
             onstderr(e.message)
+            resolve()
         }
     })
 }
