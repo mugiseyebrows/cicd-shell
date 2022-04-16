@@ -89,3 +89,9 @@ Server responds in plain text or in binary (`:pull` command) or in json (`:info`
 > {"command":":pwd"}
 < current working directory
 ```
+
+# Security
+
+Connections secured by shared secrets. Mediator shares one secret with server and one secret with client. Secrets are passed to applications as positional arguments. Use `--help` for details.
+
+Server sends json `{"secret": "shared secret"}` after connection to mediator, client sends secret inside all messages. Mediator extracts and validates secrets.

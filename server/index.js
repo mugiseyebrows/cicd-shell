@@ -15,7 +15,7 @@ if (workspace !== undefined) {
 }
 
 const argv = require('yargs')
-    .command('$0 <host> <port> [options]')
+    .command('$0 <host> <port> <secret> [options]')
     .option('c', {
         alias: 'chardet',
         description: 'use chardet to detect output encoding'
@@ -248,73 +248,70 @@ function sum_length(items) {
     return items.reduce((p,c) => p + c.length, 0)
 }
 
-function execute() {
-    return new Promise((resolve, reject) => {
-        var client = new net.Socket()
-        client.connect(argv.port, argv.host, ()=>{
-            console.log(`connected to ${argv.host} ${argv.port}`)
-        })
+function connect() {
+    var client = new net.Socket()
+    client.connect(argv.port, argv.host, ()=>{
+        console.log(`connected to ${argv.host} ${argv.port}`)
+        client.write(JSON.stringify({secret: argv.secret}))
+    })
 
-        let message = null
-        let buffers = []
-        let file_offset = -1
+    let message = null
+    let buffers = []
+    let file_offset = -1
 
-        client.on('data', (data) => {
-            console.log('client on data')
-            buffers.push(data)
-            if (message === null) {
-                let buffer = Buffer.concat(buffers)
-                let op_br = buffer.indexOf(Buffer.from("{"))
-                let cl_br = buffer.indexOf(Buffer.from("}"))
-                if (op_br !== 0) {
-                    return client.write('error p1 !== 0', () => client.end())
-                }
-                if (cl_br > -1) {
-                    message = JSON.parse(buffer.slice(op_br, cl_br+1).toString())
-                    file_offset = cl_br + 1
-                    console.log('message received', message)
-                } else {
-                    console.log('waiting for message')
-                }
+    client.on('data', (data) => {
+        debug('client on data')
+        buffers.push(data)
+        if (message === null) {
+            let buffer = Buffer.concat(buffers)
+            let op_br = buffer.indexOf(Buffer.from("{"))
+            let cl_br = buffer.indexOf(Buffer.from("}"))
+            if (op_br !== 0) {
+                return client.write('error p1 !== 0', () => client.end())
             }
-            if (message !== null) {
-                if (message.file_size !== undefined) {
-                    var length = sum_length(buffers)
-                    if (length - file_offset >= message.file_size) {
-                        if (length - file_offset != message.file_size) {
-                            console.log('file_size error')
-                        }
-                        if (message.command === ':push') {
-                            return handle_push(message, client, Buffer.concat(buffers).slice(file_offset))
-                        } else {
-                            return client.write('not push command but with file', () => client.end())
-                        }
+            if (cl_br > -1) {
+                message = JSON.parse(buffer.slice(op_br, cl_br+1).toString())
+                file_offset = cl_br + 1
+                debug('message received', message)
+            } else {
+                debug('waiting for message')
+            }
+        }
+        if (message !== null) {
+            if (message.file_size !== undefined) {
+                var length = sum_length(buffers)
+                if (length - file_offset >= message.file_size) {
+                    if (length - file_offset != message.file_size) {
+                        console.log('file_size error')
+                    }
+                    if (message.command === ':push') {
+                        return handle_push(message, client, Buffer.concat(buffers).slice(file_offset))
                     } else {
-                        console.log('waiting for more data')
+                        return client.write('not push command but with file', () => client.end())
                     }
                 } else {
-                    if (message.command === ':pull') {
-                        return handle_pull(message, client)
-                    } else if (message.command === ':info') {
-                        return handle_info(message, client)
-                    } else if (message.command === ":pwd") {
-                        return handle_pwd(message, client)
-                    } else {
-                        return handle_command(message, client)
-                    }
+                    console.log('waiting for more data')
+                }
+            } else {
+                if (message.command === ':pull') {
+                    return handle_pull(message, client)
+                } else if (message.command === ':info') {
+                    return handle_info(message, client)
+                } else if (message.command === ":pwd") {
+                    return handle_pwd(message, client)
+                } else {
+                    return handle_command(message, client)
                 }
             }
-        })
-        client.on('close', () => {
-            resolve()
-        })
+        }
+    })
+    client.on('close', () => {
+        connect()
     })
 }
 
 console.log('server');
 
-(async () => {
-    while (true) {
-        await execute()
-    }
-})()
+for(var i=0;i<5;i++) {
+    connect()
+}

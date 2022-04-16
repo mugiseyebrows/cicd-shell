@@ -3,17 +3,19 @@ const fs = require('fs')
 const path = require('path')
 
 const argv = require('yargs')
-    .command('$0 <host> <port> [options]')
+    .command('$0 <host> <port> <secret> [options]')
     .option("port", {type: 'number', description: 'mediator port'})
     .option("host", {type: 'string', description: 'mediator host'})
     .argv;
+
+//console.log(argv)
 
 function execute(command) {
     return new Promise((resolve, reject) => {
         let client = new net.Socket()
         client.connect(argv.port, argv.host, () => {
             console.log(':write')
-            client.write(JSON.stringify({command}))
+            client.write(JSON.stringify({command, secret: argv.secret}))
         })
         client.on('data', (data) => {
             console.log('< data')
@@ -35,7 +37,8 @@ function push_file(file_path) {
                 command: ":push", 
                 name: path.basename(file_path), 
                 path: ".",
-                file_size: buffer.length
+                file_size: buffer.length,
+                secret: argv.secret
             }))
             client.write(buffer)
         })
@@ -44,7 +47,6 @@ function push_file(file_path) {
             console.log(data.toString())
         })
         client.on('close', () => {
-            console.log(':close')
             resolve()
         })
     })
@@ -54,7 +56,7 @@ function file_info(file_path) {
     return new Promise((resolve, reject) => {
         let client = new net.Socket()
         client.connect(argv.port, argv.host, () => {
-            client.write(JSON.stringify({command: ":info", path: file_path}))
+            client.write(JSON.stringify({command: ":info", path: file_path, secret: argv.secret}))
         })
         client.on('data', (data) => {
             let message = JSON.parse(data.toString())
@@ -74,7 +76,7 @@ function pull_file(file_path, size) {
         let client = new net.Socket()
         let buffers = []
         client.connect(argv.port, argv.host, () => {
-            client.write(JSON.stringify({command: ":pull", path: file_path}))
+            client.write(JSON.stringify({command: ":pull", path: file_path, secret: argv.secret}))
         })
         client.on('data', (data) => {
             buffers.push(data)

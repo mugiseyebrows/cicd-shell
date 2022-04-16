@@ -181,6 +181,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def _sendJson(self, handler = None, debugMessage = None, **kwargs):
         socket = self._connect()
+        j = kwargs
+        j['secret'] = self._ui.secret.text()
         message = json.dumps(kwargs, ensure_ascii=False).encode('utf-8')
         if handler is not None:
             socket.readyRead.connect(lambda: handler(socket.readAll()))
