@@ -5,6 +5,7 @@ from dataclasses import dataclass
 import json
 import os
 from FileSelect import MODE_UPLOAD, MODE_DOWNLOAD
+import base64
 
 def set_maximum(scrollbar):
     scrollbar.setValue(scrollbar.maximum())
@@ -185,7 +186,12 @@ class MainWindow(QtWidgets.QMainWindow):
         socket = self._connect()
         j = kwargs
         j['secret'] = self._ui.secret.text()
-        message = json.dumps(kwargs, ensure_ascii=False).encode('utf-8')
+        command = j['command']
+        if '}' in command:
+            j['command'] = base64.b64encode(command.encode('utf-8')).decode('utf-8')
+            j['encoding'] = 'base64'
+
+        message = json.dumps(j, ensure_ascii=False).encode('utf-8')
         if handler is not None:
             socket.readyRead.connect(lambda: handler(socket.readAll()))
         socket.write(message)

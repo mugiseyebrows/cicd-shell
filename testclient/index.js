@@ -1,6 +1,7 @@
 const net = require('net')
 const fs = require('fs')
 const path = require('path')
+const debug = require('debug')('cicd-shell')
 
 const argv = require('yargs')
     .command('$0 <host> <port> <secret> [options]')
@@ -71,6 +72,18 @@ function sum_length(items) {
     return items.reduce((p,c) => p + c.length, 0)
 }
 
+function send_request(onconnect, ondata) {
+    return new Promise((resolve, reject) => {
+        let client = new net.Socket()
+        debug('client.connect')
+        client.connect(argv.port, argv.host, () => {
+            onconnect(client)
+        })
+        client.on('data', ondata)
+        client.on('close', resolve)
+    })
+}
+
 function pull_file(file_path, size) {
     return new Promise((resolve, reject) => {
         let client = new net.Socket()
@@ -120,5 +133,33 @@ console.log('client');
         console.log('> ' + command)
         await execute(command)
     }
+
+function write_json(client, obj) {
+    obj.secret = argv.secret
+    let stringified = JSON.stringify(obj)
+    client.write(stringified)
+}
+
+function log_data(data) {
+    console.log(data.toString())
+}
+
+async function test_base64() {
+    debug('test_base64')
+    let command = "echo 1 {}"
+    command = Buffer.from(command).toString('base64')
+    debug('command', command)
+    await send_request((client) => write_json(client, {command, encoding: 'base64'}), log_data)
+}
+
+(async () => {
+    
+    // tst push file
+
+    /*await test_push_file()
+    await test_pull_file()
+    await test_commands()*/
+    await test_base64()
+
 
 })()

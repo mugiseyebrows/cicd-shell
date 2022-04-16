@@ -207,6 +207,9 @@ function handle_pwd(message, client) {
 
 function handle_command(message, client, data) {
     let command = message.command
+    if (message.encoding == 'base64') {
+        command = Buffer.from(command, 'base64').toString()
+    }
     let [executable, args] = split_args(command)
     if (executable == 'cd') {
         let dst = args[0]
