@@ -69,6 +69,8 @@ class Ui_MainWindow(object):
         self.menubar.setObjectName("menubar")
         self.menuFile = QtWidgets.QMenu(self.menubar)
         self.menuFile.setObjectName("menuFile")
+        self.menu_Edit = QtWidgets.QMenu(self.menubar)
+        self.menu_Edit.setObjectName("menu_Edit")
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
@@ -77,9 +79,13 @@ class Ui_MainWindow(object):
         self.actionUpload.setObjectName("actionUpload")
         self.actionDownload = QtWidgets.QAction(MainWindow)
         self.actionDownload.setObjectName("actionDownload")
+        self.actionClear = QtWidgets.QAction(MainWindow)
+        self.actionClear.setObjectName("actionClear")
         self.menuFile.addAction(self.actionUpload)
         self.menuFile.addAction(self.actionDownload)
+        self.menu_Edit.addAction(self.actionClear)
         self.menubar.addAction(self.menuFile.menuAction())
+        self.menubar.addAction(self.menu_Edit.menuAction())
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
@@ -94,8 +100,11 @@ class Ui_MainWindow(object):
         self.label_2.setText(_translate("MainWindow", "Secret"))
         self.label_4.setText(_translate("MainWindow", ">"))
         self.menuFile.setTitle(_translate("MainWindow", "&File"))
+        self.menu_Edit.setTitle(_translate("MainWindow", "&Edit"))
         self.actionUpload.setText(_translate("MainWindow", "&Upload"))
         self.actionDownload.setText(_translate("MainWindow", "&Download"))
+        self.actionClear.setText(_translate("MainWindow", "&Clear"))
+        self.actionClear.setShortcut(_translate("MainWindow", "Ctrl+L"))
 from FileSelect import FileSelect
 
 

@@ -61,6 +61,8 @@ class MainWindow(QtWidgets.QMainWindow):
         ui.actionUpload.triggered.connect(ui.upload.show)
         ui.actionDownload.triggered.connect(ui.download.show)
 
+        ui.actionClear.triggered.connect(self.onClear)
+
         def onUploadPwd(data):
             ui.upload.setRemotePath(data_to_text(data))
 
@@ -192,6 +194,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self._socket = socket
         return socket
 
+    def onClear(self):
+        self._ui.output.setPlainText('')
+
     def onReturnPressed(self):
         ui = self._ui
         command = ui.command.text()
@@ -199,7 +204,7 @@ class MainWindow(QtWidgets.QMainWindow):
         ui.output.appendPlainText(command + "\n")
         self._addToHistory(command)
         if command == 'cls':
-            ui.output.setPlainText('')
+            self.onClear()
             return
         def onResponse(data):
             self._insertText(data_to_text(data))

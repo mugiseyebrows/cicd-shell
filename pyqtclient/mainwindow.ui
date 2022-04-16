@@ -112,7 +112,14 @@
     <addaction name="actionUpload"/>
     <addaction name="actionDownload"/>
    </widget>
+   <widget class="QMenu" name="menu_Edit">
+    <property name="title">
+     <string>&amp;Edit</string>
+    </property>
+    <addaction name="actionClear"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menu_Edit"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionUpload">
@@ -123,6 +130,14 @@
   <action name="actionDownload">
    <property name="text">
     <string>&amp;Download</string>
+   </property>
+  </action>
+  <action name="actionClear">
+   <property name="text">
+    <string>&amp;Clear</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+L</string>
    </property>
   </action>
  </widget>
