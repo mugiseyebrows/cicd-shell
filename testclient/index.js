@@ -105,22 +105,24 @@ function pull_file(file_path, size) {
 
 console.log('client');
 
-(async () => {
-    
+async function test_push_file() {
     let file_path = path.join(__dirname, "..", "images/pyqtclient.png")
-
-    // tst push file
     await push_file(file_path)
     console.log(`pushed ${file_path}`)
+}
 
+async function test_pull_file() {
     // test pull file
+    let file_path = path.join(__dirname, "..", "images/pyqtclient.png")
     let file_size = await file_info(file_path)
     console.log('file_size', file_size)
     let buffer = await pull_file(file_path, file_size)
     let tmp_path = path.join(process.env.TEMP, path.basename(file_path))
     fs.writeFileSync(tmp_path, buffer)
     console.log(`saved as ${tmp_path}`)
+}
 
+async function test_commands() {
     var commands = [
         'echo 1', 
         'cd C:\\windows', 
@@ -133,6 +135,7 @@ console.log('client');
         console.log('> ' + command)
         await execute(command)
     }
+}
 
 function write_json(client, obj) {
     obj.secret = argv.secret
