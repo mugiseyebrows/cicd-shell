@@ -35,6 +35,11 @@ class Worker {
         this._server_authorized = false
         this._client_authorized = false
         server.on('data', (data) => this.onServerData(data))
+        server.on('close', () => {
+            if (this._client !== null) {
+                this._client.end()
+            }
+        })
     }
     onServerData(data) {
         //let server = this._server
