@@ -1,0 +1,1 @@
+wc -l server/*.js mediator/*.js testclient/*.js pyqtclient/*.py
