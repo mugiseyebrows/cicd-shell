@@ -14,22 +14,22 @@ npm i
 node index.js my-server-secret my-client-secret
 ```
 
-Insert `cicd-shell` to pipeline (todo: github action).
+Insert `cicd-shell-server` action to pipeline:
 
 ```yaml
-jobs:
-  main:
-    runs-on: windows-latest
-    steps:
-    - uses: actions/setup-node@v3
-    - run: git clone --depth=1 https://github.com/mugiseyebrows/cicd-shell.git
-    - run: |
-        pushd cicd-shell\server
-          npm i
-        popd
-      shell: cmd
-    - run: node cicd-shell\server\index.js your.public.server 8857 ${{ secrets.SERVER_SECRET }}
-      shell: cmd
+    - uses: mugiseyebrows/cicd-shell-server@v1
+      with:
+        host: your.public.server
+        port: 8857
+        secret: ${{ secrets.SERVER_SECRET }}
+```
+
+Or, if your ci/cd is not github actions:
+
+```yaml
+run: git clone --depth=1 https://github.com/mugiseyebrows/cicd-shell.git
+run: cd cicd-shell/server && npm i
+run: node cicd-shell/server/index.js your.public.server 8857 ${{ secrets.SERVER_SECRET }}
 ```
 
 Commit and push.
@@ -38,12 +38,12 @@ Wait until mediator prints `server connected`.
 
 Run `pyqtclient` on local machine. 
 
-```cmd
+```bash
 git clone --depth=1 https://github.com/mugiseyebrows/cicd-shell.git
-python cicd-shell\pyqtclient\main.py
+python cicd-shell/pyqtclient/main.py
 ```
 
-Connect to `your.public.server:8858`, and execute commands.
+Connect to `your.public.server` and execute commands.
 
 ![image](images/pyqtclient.png)
 
