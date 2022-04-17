@@ -68,7 +68,7 @@ Connect to `your.public.server` and execute commands.
 
 ![image](images/pyqtclient.png)
 
-# How it works
+# How does it work
 
 - Server connects to mediator and waits for command.
 - Client connects to mediator, sends command and waits for responce. 
