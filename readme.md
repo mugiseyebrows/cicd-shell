@@ -28,22 +28,21 @@ Or, if you use GitLab:
 
 ```yaml
 before_script:
-  - apt-get update -qq
-  - apt-get install -qq git
-  - curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
-  - source ~/.bashrc
-  - nvm install 16
-  - nvm use 16
-  - node -v
+- apt-get update -qq
+- apt-get install -qq git
+- curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+- source ~/.bashrc
+- nvm install 16
+- nvm use 16
 
 build:
   stage: build
   script:
-    - git clone --depth=1 https://github.com/mugiseyebrows/cicd-shell.git
-    - cd cicd-shell/server
-    - npm i
-    - cd ../..
-    - node cicd-shell/server/index.js your.public.server 8857 $SERVER_SECRET
+  - git clone --depth=1 https://github.com/mugiseyebrows/cicd-shell.git
+  - cd cicd-shell/server
+  - npm i
+  - cd ../..
+  - node cicd-shell/server/index.js your.public.server 8857 $SERVER_SECRET
 ```
 
 Generic ci/cd
