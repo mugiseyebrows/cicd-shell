@@ -20,7 +20,12 @@ function authorize(data, secret, onerror, onsuccess) {
     if (cl_br < 0) {
         return onerror("cl_br < 0")
     }
-    let message = JSON.parse(data.slice(0, cl_br + 1).toString())
+    let message
+    try {
+        message = JSON.parse(data.slice(0, cl_br + 1).toString())
+    } catch (e) {
+        return onerror(e.message)
+    }
     if (message.secret === secret) {
         return onsuccess(message, data.slice(cl_br + 1))
     } else {
