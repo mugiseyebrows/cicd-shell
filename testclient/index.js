@@ -155,6 +155,11 @@ async function test_base64() {
     await send_request((client) => write_json(client, {command, encoding: 'base64'}), log_data)
 }
 
+async function test_complete() {
+    let p = 'D:\\dev\\cicd-shell\\se'
+    await send_request((client) => write_json(client, {command: ':complete', path: p, type: 'dir'}), log_data)
+}
+
 (async () => {
     
     // tst push file
@@ -162,7 +167,8 @@ async function test_base64() {
     /*await test_push_file()
     await test_pull_file()
     await test_commands()*/
-    await test_base64()
+    //await test_base64()
+    await test_complete()
 
 
 })()

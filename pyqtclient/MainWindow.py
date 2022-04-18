@@ -13,12 +13,16 @@ def set_maximum(scrollbar):
 class KeyFilter(QtCore.QObject):
     keyUpPressed = QtCore.pyqtSignal()
     keyDownPressed = QtCore.pyqtSignal()
+    tabPressed = QtCore.pyqtSignal()
     def eventFilter(self, obj, event):
         if event.type() == QtCore.QEvent.KeyPress:
             if event.key() == QtCore.Qt.Key_Up:
                 self.keyUpPressed.emit()
             elif event.key() == QtCore.Qt.Key_Down:
                 self.keyDownPressed.emit()
+            elif event.key() == QtCore.Qt.Key_Tab:
+                self.tabPressed.emit()
+                return True
         return False
 
 class HideFilter(QtCore.QObject):
@@ -86,46 +90,80 @@ class MainWindow(QtWidgets.QMainWindow):
         ui.command.installEventFilter(filter)
         self._filter = filter
 
-        model = QtCore.QStringListModel([])
-        self._model = model
+        historyModel = QtCore.QStringListModel([])
+        self._historyModel = historyModel
 
-        completer = QtWidgets.QCompleter()
-        #completer.setModel(model)
-        completer.setModel(None)
-        completer.setCompletionMode(QtWidgets.QCompleter.UnfilteredPopupCompletion)
-        ui.command.setCompleter(completer)
-        
-        def onKeyUp():
-            if completer.popup().isVisible():
-                return
-            completer.setModel(self._model)
+        def setHistoryCompleter():
+            completer = QtWidgets.QCompleter()
+            completer.setModel(self._historyModel)
+            completer.setCompletionPrefix(ui.command.text())
+            completer.setFilterMode(QtCore.Qt.MatchContains)
+            ui.command.setCompleter(completer)
             completer.complete()
             completer.popup().show()
             model = completer.popup().model()
-            completer.popup().setCurrentIndex(model.index(model.rowCount()-1,0))
+            #completer.popup().setCurrentIndex(model.index(0, 0))
+            completer.popup().installEventFilter(self._hideFilter)
+            self._completer = completer
+
+        def onKeyUp():
+            completer = ui.command.completer()
+            if completer is not None and completer.popup().isVisible():
+                return
+            setHistoryCompleter()
             
         def onKeyDown():
-            if completer.popup().isVisible():
+            completer = ui.command.completer()
+            if completer is not None and completer.popup().isVisible():
                 return
-            completer.setModel(self._model)
+            setHistoryCompleter()
+
+        def onComplete(data):
+
+            def quoted(path):
+                if ' ' in path:
+                    return '"' + path + '"'
+                return path
+
+            command = ui.command.text().split(" ")
+            prefix = " ".join(command[:-1])
+
+            j = json.loads(data.data())
+            
+            completer = QtWidgets.QCompleter()
+            model = QtCore.QStringListModel(["{} {}".format(prefix, quoted(path)) for path in j['paths']])
+            completer.setModel(model)
+            
+            ui.command.setCompleter(completer)
+            completer.setCompletionPrefix(prefix)
             completer.complete()
-            completer.popup().show()
-            model = completer.popup().model()
-            completer.popup().setCurrentIndex(model.index(0,0))
+            completer.popup().installEventFilter(self._hideFilter)
+            self._completer = completer
+
+        def onTabPressed():
+            command = ui.command.text().split(" ")
+            prefix = " ".join(command[:-1])
+            path = command[-1]
+            if path.startswith('"'):
+                path = path[1:]
+            type = 'dir' if prefix == 'cd' else None
+            self._sendJson(onComplete, ":complete {}".format(path), command=":complete", path=path, type=type)
 
         filter.keyUpPressed.connect(onKeyUp)
         filter.keyDownPressed.connect(onKeyDown)
+        filter.tabPressed.connect(onTabPressed)
 
         hideFilter = HideFilter(self)
-        hideFilter.hidden.connect(lambda: completer.setModel(None))
-        completer.popup().installEventFilter(hideFilter)
+        hideFilter.hidden.connect(lambda: ui.command.setCompleter(None))
+        
+        self._hideFilter = hideFilter
 
     def _setDownloadVisible(self, visible):
         ui = self._ui
         ui.downloadGroup.setVisible(visible)
 
     def _addToHistory(self, command):
-        model = self._model
+        model = self._historyModel
         row = model.rowCount()
         model.insertRow(row)
         model.setData(model.index(row, 0), command)

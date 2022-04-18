@@ -206,6 +206,48 @@ function handle_pwd(message, client) {
     client.write(cwd, () => client.end())
 }
 
+function handle_complete(message, client) {
+    let p = message.path
+    let base
+    let n
+
+    let relative = !path.isAbsolute(p)
+    if (relative) {
+        p = path.join(cwd, p)
+    }
+
+    if (p.endsWith('/') || p.endsWith('\\')) {
+        base = p.replace(/[\/\\]$/,'')
+        n = ''
+    } else {
+        base = path.dirname(p)
+        n = path.basename(p)
+    }
+    if (fs.existsSync(base) && fs.statSync(base).isDirectory()) {
+        let name_filter = item => item.startsWith(n)
+        if (process.platform == 'win32') {
+            name_filter = item => item.toLowerCase().startsWith(n)
+        } 
+        let paths = fs.readdirSync(base).filter(name_filter).map(e => path.join(base, e))
+        if (message.type === 'dir') {
+            paths = paths.filter(e => {
+                try {
+                    return fs.statSync(e).isDirectory()
+                } catch (e) {
+                    return false
+                }
+            })
+        }
+        if (relative) {
+            paths = paths.map(e => path.relative(cwd, e))
+        }
+        client.write(JSON.stringify({paths}), () => client.end())
+    } else {
+        client.write(JSON.stringify({error: `${base} not a directory`}), () => client.end())
+    }
+
+}
+
 function handle_command(message, client, data) {
     let command = message.command
     if (message.encoding == 'base64') {
@@ -303,6 +345,8 @@ function connect() {
                     return handle_info(message, client)
                 } else if (message.command === ":pwd") {
                     return handle_pwd(message, client)
+                } else if (message.command === ":complete") {
+                    return handle_complete(message, client)
                 } else {
                     return handle_command(message, client)
                 }
