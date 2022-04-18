@@ -5,7 +5,7 @@ const fs = require('fs')
 const path = require('path')
 const ruchardet = require('ruchardet')
 const chardet = require('chardet')
-const debug = require('debug')('cicd-server')
+const debug = require('debug')('cicd-shell')
 
 let cwd = process.cwd()
 
