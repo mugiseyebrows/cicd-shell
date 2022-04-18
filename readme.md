@@ -17,7 +17,7 @@ node index.js my-server-secret my-client-secret
 Insert `cicd-shell-server` action to pipeline:
 
 ```yaml
-    - uses: mugiseyebrows/cicd-shell-server@v1
+    - uses: mugiseyebrows/cicd-shell-server@v1.1
       with:
         host: your.public.server
         port: 8857
